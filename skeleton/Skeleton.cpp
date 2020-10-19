@@ -3,6 +3,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/IR/Instructions.h"
+#include <iterator>
 using namespace llvm;
 
 namespace {
@@ -11,8 +13,21 @@ namespace {
     SkeletonPass() : FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      errs() << "I saw a function called " << F.getName() << "!\n";
-      return false;
+      bool unmodified = true;
+      for (auto& B : F) {
+        for (auto i = B.begin(); i != B.end();) {
+          auto &I = *i;
+          if (auto* call = dyn_cast<CallInst>(&I)) {
+            if (call->getCalledFunction() && call->getCalledFunction()->getName()=="printf") {
+              i = I.eraseFromParent();
+              unmodified = false;
+              continue;
+            }
+          }
+          ++i;
+        }
+      }
+      return unmodified;
     }
   };
 }
