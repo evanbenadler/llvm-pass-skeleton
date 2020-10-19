@@ -13,21 +13,31 @@ namespace {
     SkeletonPass() : FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      bool unmodified = true;
+      bool dirty = false;
+      bool preserve = false;
       for (auto& B : F) {
         for (auto i = B.begin(); i != B.end();) {
           auto &I = *i;
           if (auto* call = dyn_cast<CallInst>(&I)) {
-            if (call->getCalledFunction() && call->getCalledFunction()->getName()=="printf") {
+            if (call->getCalledFunction() &&
+                call->getCalledFunction()->getName()=="printf" && !preserve) {
               i = I.eraseFromParent();
-              unmodified = false;
+              dirty = true;
+              preserve = false;
+              continue;
+            }
+            if (call->getCalledFunction() &&
+                call->getCalledFunction()->getName()=="__preserve_printf") {
+              i = I.eraseFromParent();
+              dirty = true;
+              preserve = true;
               continue;
             }
           }
           ++i;
         }
       }
-      return unmodified;
+      return dirty;
     }
   };
 }

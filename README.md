@@ -1,9 +1,14 @@
 # llvm-pass-skeleton
 
-A trivial LLVM pass which removes all printf calls from a program.
+A trivial LLVM pass which removes printf calls from a program.
 
-The provided gcd.c program returns the gcd as the error code, so correctness
-can be verified by running `echo $?`.
+There is also a magic annotation function which disables removal for the next
+printf. It needs to be placed before (but not necessarily immediately before)
+the printf and within the same basic block.
+
+The provided gcd.c file should demonstrate the effect of this pass. Note
+however that normal compilation results in a linker error since the annotation
+function definition does not exist.
 
 Build:
 
